@@ -19,6 +19,37 @@ typedef struct {
     Vector2 speed;
 } Ball;
 
+typedef enum {
+    START_SCREEN,
+    HELP_SCREEN,
+    GAME_SCREEN
+} GameState;
+
+void startScreen(GameState *state);
+void helpScreen(GameState *state);
+void gameScreen(Paddle *leftPaddle, Paddle *rightPaddle, Ball *ball, bool *gameOver, int *winner);
+
+void startScreen(GameState *state) {
+    DrawText("PONG", WINDOW_WIDTH / 2 - MeasureText("PONG", 40) / 2, WINDOW_HEIGHT / 4, 40, WHITE);
+    DrawText("Press SPACE to begin", WINDOW_WIDTH / 2 - MeasureText("Press SPACE to begin", 20) / 2, WINDOW_HEIGHT / 2, 20, WHITE);
+    DrawText("?", WINDOW_WIDTH - 30, 20, 20, WHITE);
+
+    if (IsKeyPressed(KEY_SPACE)) {
+        *state = GAME_SCREEN;
+    }
+
+    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+        Vector2 mousePos = GetMousePosition();
+        if (mousePos.x >= WINDOW_WIDTH - 30 && mousePos.x <= WINDOW_WIDTH - 10 && mousePos.y >= 20 && mousePos.y <= 40) {
+            *state = HELP_SCREEN;
+        }
+    }
+}
+
+void helpScreen(GameState *state) {
+    // TODO
+}
+
 int main() {
     InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "PONG");
     SetTargetFPS(60);
