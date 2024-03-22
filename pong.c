@@ -29,11 +29,14 @@ typedef enum {
 void startScreen(GameState *state);
 void helpScreen(GameState *state);
 void gameScreen(Paddle *leftPaddle, Paddle *rightPaddle, Ball *ball, bool *gameOver, int *winner);
-void endScreen(GameState *state, int winner, int leftScore, int rightScore);
+void endScreen(GameState *state, int winner, int leftScore, int rightScore, bool *gameOver, Paddle *leftPaddle, Paddle *rightPaddle, Ball *ball);
 
 void startScreen(GameState *state) {
     DrawText("PONG", WINDOW_WIDTH / 2 - MeasureText("PONG", 40) / 2, WINDOW_HEIGHT / 4, 40, WHITE);
     DrawText("Press SPACE to begin", WINDOW_WIDTH / 2 - MeasureText("Press SPACE to begin", 20) / 2, WINDOW_HEIGHT / 2, 20, WHITE);
+    
+    DrawRectangle(WINDOW_WIDTH - 40, 13, 30, 30, WHITE);
+    DrawRectangle(WINDOW_WIDTH - 38, 16, 26, 26, BLACK);
     DrawText("?", WINDOW_WIDTH - 30, 20, 20, WHITE);
 
     if (IsKeyPressed(KEY_SPACE)) {
@@ -60,99 +63,88 @@ void helpScreen(GameState *state) {
 }
 
 void gameScreen(Paddle *leftPaddle, Paddle *rightPaddle, Ball *ball, bool *gameOver, int *winner) {
-    if (!*gameOver) {
-        // Move the paddles
-        if (IsKeyDown(KEY_W) && leftPaddle->position.y > 0)
-            leftPaddle->position.y -= PADDLE_SPEED;
-        if (IsKeyDown(KEY_S) && leftPaddle->position.y < WINDOW_HEIGHT - PADDLE_HEIGHT)
-            leftPaddle->position.y += PADDLE_SPEED;
-        if (IsKeyDown(KEY_UP) && rightPaddle->position.y > 0)
-            rightPaddle->position.y -= PADDLE_SPEED;
-        if (IsKeyDown(KEY_DOWN) && rightPaddle->position.y < WINDOW_HEIGHT - PADDLE_HEIGHT)
-            rightPaddle->position.y += PADDLE_SPEED;
+    // Game logic
+    // Move the paddles
+    if (IsKeyDown(KEY_W) && leftPaddle->position.y > 0)
+        leftPaddle->position.y -= PADDLE_SPEED;
+    if (IsKeyDown(KEY_S) && leftPaddle->position.y < WINDOW_HEIGHT - PADDLE_HEIGHT)
+        leftPaddle->position.y += PADDLE_SPEED;
+    if (IsKeyDown(KEY_UP) && rightPaddle->position.y > 0)
+        rightPaddle->position.y -= PADDLE_SPEED;
+    if (IsKeyDown(KEY_DOWN) && rightPaddle->position.y < WINDOW_HEIGHT - PADDLE_HEIGHT)
+        rightPaddle->position.y += PADDLE_SPEED;
 
-        // Move the ball
-        ball->position.x += ball->speed.x;
-        ball->position.y += ball->speed.y;
+    // Move the ball
+    ball->position.x += ball->speed.x;
+    ball->position.y += ball->speed.y;
 
-        // Check for collision with walls
-        if (ball->position.y < 0 || ball->position.y > WINDOW_HEIGHT - BALL_SIZE)
-            ball->speed.y = -ball->speed.y;
+    // Check for collision with walls
+    if (ball->position.y < 0 || ball->position.y > WINDOW_HEIGHT - BALL_SIZE)
+        ball->speed.y = -ball->speed.y;
 
-        // Check for collision with paddles
-        if (CheckCollisionRecs((Rectangle){ leftPaddle->position.x, leftPaddle->position.y, PADDLE_WIDTH, PADDLE_HEIGHT },
+    // Check for collision with paddles
+    if (CheckCollisionRecs((Rectangle){ leftPaddle->position.x, leftPaddle->position.y, PADDLE_WIDTH, PADDLE_HEIGHT },
                             (Rectangle){ ball->position.x, ball->position.y, BALL_SIZE, BALL_SIZE }))
-            ball->speed.x = -ball->speed.x;
-        if (CheckCollisionRecs((Rectangle){ rightPaddle->position.x, rightPaddle->position.y, PADDLE_WIDTH, PADDLE_HEIGHT },
+        ball->speed.x = -ball->speed.x;
+    if (CheckCollisionRecs((Rectangle){ rightPaddle->position.x, rightPaddle->position.y, PADDLE_WIDTH, PADDLE_HEIGHT },
                             (Rectangle){ ball->position.x, ball->position.y, BALL_SIZE, BALL_SIZE }))
-            ball->speed.x = -ball->speed.x;
+        ball->speed.x = -ball->speed.x;
 
-        // Check for scoring
-        if (ball->position.x < 0) {
-            rightPaddle->score++;
-            ball->position = (Vector2){ WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2 };
-        }
-        if (ball->position.x > WINDOW_WIDTH) {
-            leftPaddle->score++;
-            ball->position = (Vector2){ WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2 };
-        }
-
-        if (leftPaddle->score == WIN_CON) {
-            *gameOver = true;
-            *winner = 1;
-        }
-
-        if (rightPaddle->score == WIN_CON) {
-            *gameOver = true;
-            *winner = 2;
-        }
+    // Check for scoring
+    if (ball->position.x < 0) {
+        rightPaddle->score++;
+        ball->position = (Vector2){ WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2 };
+        ball->speed = (Vector2){ BALL_SPEED, BALL_SPEED }; // Reset ball speed
     }
-    else {
-        if (IsKeyPressed(KEY_SPACE)) {
-            *gameOver = false;
-            *winner = 0;
-            leftPaddle->score = 0;
-            rightPaddle->score = 0;
-            ball->position = (Vector2){ WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2 };
-        }
+    if (ball->position.x > WINDOW_WIDTH) {
+        leftPaddle->score++;
+        ball->position = (Vector2){ WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2 };
+        ball->speed = (Vector2){ -BALL_SPEED, BALL_SPEED }; // Reset ball speed in the opposite direction
     }
 
-    if (!*gameOver) {
-        // Draw the paddles
-        DrawRectangle(leftPaddle->position.x, leftPaddle->position.y, PADDLE_WIDTH, PADDLE_HEIGHT, WHITE);
-        DrawRectangle(rightPaddle->position.x, rightPaddle->position.y, PADDLE_WIDTH, PADDLE_HEIGHT, WHITE);
-
-        // Draw the ball
-        DrawRectangle(ball->position.x, ball->position.y, BALL_SIZE, BALL_SIZE, WHITE);
-
-        // Draw the scores
-        DrawText(TextFormat("%d", leftPaddle->score), WINDOW_WIDTH / 4, 20, 20, WHITE);
-        DrawText(TextFormat("%d", rightPaddle->score), 3 * WINDOW_WIDTH / 4, 20, 20, WHITE);
+    // Check for winner
+    if (leftPaddle->score == WIN_CON) {
+        *gameOver = true;
+        *winner = 1;
     }
-    else {
-        const char* winnerText = *winner == 1 ? "P1 WINS!" : "P2 WINS!";
-        DrawText(winnerText, WINDOW_WIDTH / 2 - MeasureText(winnerText, 40) / 2, WINDOW_HEIGHT / 2 - 40, 40, WHITE);
-        DrawText("Press Space to play again",WINDOW_WIDTH / 2 - MeasureText("Press Space to play again", 20) / 2, WINDOW_HEIGHT / 2 + 20, 20, WHITE);
+    else if (rightPaddle->score == WIN_CON) {
+        *gameOver = true;
+        *winner = 2;
     }
+
+    // Draw game objects
+    DrawRectangle(leftPaddle->position.x, leftPaddle->position.y, PADDLE_WIDTH, PADDLE_HEIGHT, WHITE);
+    DrawRectangle(rightPaddle->position.x, rightPaddle->position.y, PADDLE_WIDTH, PADDLE_HEIGHT, WHITE);
+    DrawRectangle(ball->position.x, ball->position.y, BALL_SIZE, BALL_SIZE, WHITE);
+    DrawText(TextFormat("%d", leftPaddle->score), WINDOW_WIDTH / 4, 20, 20, WHITE);
+    DrawText(TextFormat("%d", rightPaddle->score), 3 * WINDOW_WIDTH / 4, 20, 20, WHITE);
 }
 
-void endScreen(GameState *state, int winner, int leftScore, int rightScore) {
+void endScreen(GameState *state, int winner, int leftScore, int rightScore, bool *gameOver, Paddle *leftPaddle, Paddle *rightPaddle, Ball *ball) {
+    *gameOver = false;
+
     const char* winnerText = winner == 1 ? "P1 WINS!" : "P2 WINS!";
     const char* scoreText = TextFormat("%d-%d", leftScore, rightScore);
 
     DrawText(winnerText, WINDOW_WIDTH / 2 - MeasureText(winnerText, 40) / 2, WINDOW_HEIGHT / 4, 40, WHITE);
     DrawText(scoreText, WINDOW_WIDTH / 2 - MeasureText(scoreText, 30) / 2, WINDOW_HEIGHT / 2 - 15, 30, WHITE);
-    DrawText("Press SPACE to play again", WINDOW_WIDTH / 2 - MeasureText("Press SPACE to play again", 20) / 2, WINDOW_HEIGHT / 2 + 40, 20, WHITE);
-    DrawText("Press ESC to go to the start menu", WINDOW_WIDTH / 2 - MeasureText("Press ESC to go to the start menu", 20) / 2, WINDOW_HEIGHT / 2 + 70, 20, WHITE);
+    DrawText("Press SPACE to play again", WINDOW_WIDTH / 2 - MeasureText("Press SPACE to play again", 20) / 2, WINDOW_HEIGHT / 2 + 100, 20, WHITE);
+    DrawText("Press S to go to the start menu", WINDOW_WIDTH / 2 - MeasureText("Press S to go to the start menu", 20) / 2, WINDOW_HEIGHT / 2 + 130, 20, WHITE);
 
     if (IsKeyPressed(KEY_SPACE)) {
         *state = GAME_SCREEN;
+        // Reset game state
+        leftPaddle->score = 0;
+        rightPaddle->score = 0;
+        ball->position = (Vector2){ WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2 };
+        ball->speed = (Vector2){ BALL_SPEED, BALL_SPEED };
     }
 
-    if (IsKeyPressed(KEY_ESCAPE)) {
+    if (IsKeyPressed(KEY_S)) {
         *state = START_SCREEN;
     }
 }
+
 int main() {
     InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "PONG");
     SetTargetFPS(60);
@@ -190,7 +182,7 @@ int main() {
                 }
                 break;
             case END_SCREEN:
-                endScreen(&state, winner, leftPaddle.score, rightPaddle.score);
+                endScreen(&state, winner, leftPaddle.score, rightPaddle.score, &gameOver, &leftPaddle, &rightPaddle, &ball);
         }
 
         EndDrawing();

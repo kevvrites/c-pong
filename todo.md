@@ -1,13 +1,14 @@
 Pong
 
-- Start Screen
+- ~~Start Screen~~
   - Animation of game in background
-  - Press space to start
-  - Help/Controls
+  - ~~Press space to start~~
+  - ~~Help/Controls~~
 - Help/Controls Screen
-  - Controls
+  - ~~Controls~~
   - Remap controls
   - Change win condition (Click/hold +/-1 triangle arrow buttons)
+  - Ball goes to which side when point scored? (winners ball/losers ball)
 - Game
   - ~~Left paddle~~
   - ~~Right paddle~~
