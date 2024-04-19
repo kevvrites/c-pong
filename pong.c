@@ -63,8 +63,6 @@ void helpScreen(GameState *state) {
 }
 
 void gameScreen(Paddle *leftPaddle, Paddle *rightPaddle, Ball *ball, bool *gameOver, int *winner) {
-    // Game logic
-    // Move the paddles
     if (IsKeyDown(KEY_W) && leftPaddle->position.y > 0)
         leftPaddle->position.y -= PADDLE_SPEED;
     if (IsKeyDown(KEY_S) && leftPaddle->position.y < WINDOW_HEIGHT - PADDLE_HEIGHT)
@@ -74,15 +72,12 @@ void gameScreen(Paddle *leftPaddle, Paddle *rightPaddle, Ball *ball, bool *gameO
     if (IsKeyDown(KEY_DOWN) && rightPaddle->position.y < WINDOW_HEIGHT - PADDLE_HEIGHT)
         rightPaddle->position.y += PADDLE_SPEED;
 
-    // Move the ball
     ball->position.x += ball->speed.x;
     ball->position.y += ball->speed.y;
 
-    // Check for collision with walls
     if (ball->position.y < 0 || ball->position.y > WINDOW_HEIGHT - BALL_SIZE)
         ball->speed.y = -ball->speed.y;
 
-    // Check for collision with paddles
     if (CheckCollisionRecs((Rectangle){ leftPaddle->position.x, leftPaddle->position.y, PADDLE_WIDTH, PADDLE_HEIGHT },
                             (Rectangle){ ball->position.x, ball->position.y, BALL_SIZE, BALL_SIZE }))
         ball->speed.x = -ball->speed.x;
@@ -90,19 +85,17 @@ void gameScreen(Paddle *leftPaddle, Paddle *rightPaddle, Ball *ball, bool *gameO
                             (Rectangle){ ball->position.x, ball->position.y, BALL_SIZE, BALL_SIZE }))
         ball->speed.x = -ball->speed.x;
 
-    // Check for scoring
     if (ball->position.x < 0) {
         rightPaddle->score++;
         ball->position = (Vector2){ WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2 };
-        ball->speed = (Vector2){ BALL_SPEED, BALL_SPEED }; // Reset ball speed
+        ball->speed = (Vector2){ BALL_SPEED, BALL_SPEED };
     }
     if (ball->position.x > WINDOW_WIDTH) {
         leftPaddle->score++;
         ball->position = (Vector2){ WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2 };
-        ball->speed = (Vector2){ -BALL_SPEED, BALL_SPEED }; // Reset ball speed in the opposite direction
+        ball->speed = (Vector2){ -BALL_SPEED, BALL_SPEED };
     }
 
-    // Check for winner
     if (leftPaddle->score == WIN_CON) {
         *gameOver = true;
         *winner = 1;
@@ -112,7 +105,6 @@ void gameScreen(Paddle *leftPaddle, Paddle *rightPaddle, Ball *ball, bool *gameO
         *winner = 2;
     }
 
-    // Draw game objects
     DrawRectangle(leftPaddle->position.x, leftPaddle->position.y, PADDLE_WIDTH, PADDLE_HEIGHT, WHITE);
     DrawRectangle(rightPaddle->position.x, rightPaddle->position.y, PADDLE_WIDTH, PADDLE_HEIGHT, WHITE);
     DrawRectangle(ball->position.x, ball->position.y, BALL_SIZE, BALL_SIZE, WHITE);
@@ -133,7 +125,6 @@ void endScreen(GameState *state, int winner, int leftScore, int rightScore, bool
 
     if (IsKeyPressed(KEY_SPACE)) {
         *state = GAME_SCREEN;
-        // Reset game state
         leftPaddle->score = 0;
         rightPaddle->score = 0;
         ball->position = (Vector2){ WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2 };
