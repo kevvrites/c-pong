@@ -1,0 +1,15 @@
+CC = gcc
+CFLAGS = -Wall -std=c99 -D_DEFAULT_SOURCE
+LIBS = -lraylib -lm -lpthread -ldl -framework CoreVideo -framework IOKit -framework Cocoa -framework GLUT -framework OpenGL
+LIBRARY_PATH = -L/Users/kevinliu/Desktop/raylib/src
+INCLUDE_PATH = -I/Users/kevinliu/Desktop/raylib/src
+SRC = pong.c
+OUT = pong
+
+all: $(OUT)
+
+$(OUT): $(SRC)
+	$(CC) $(CFLAGS) $(INCLUDE_PATH) $(SRC) -o $(OUT) $(LIBRARY_PATH) $(LIBS)
+
+clean:
+	rm -f $(OUT)
